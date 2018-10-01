@@ -12,12 +12,17 @@ class SuperheroViewController: UIViewController, UICollectionViewDataSource {
     
     @IBOutlet weak var collectionView: UICollectionView!
     
-    var movies: [[String: Any]] = []
+    var movies: [Movie] = []
+    var refreshControl: UIRefreshControl!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         collectionView.dataSource = self
+        
+        refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(SuperheroViewController.didPullToRefresh(_:)), for: .valueChanged)
+        collectionView.insertSubview(refreshControl, at: 0)
         
         let layout = collectionView.collectionViewLayout as! UICollectionViewFlowLayout
         layout.minimumInteritemSpacing = 5
@@ -28,11 +33,15 @@ class SuperheroViewController: UIViewController, UICollectionViewDataSource {
         layout.itemSize = CGSize(width: width, height: width * 3 / 2)
         
         
-        fetchMovies()
+        superheroFetch()
         
         // Do any additional setup after loading the view.
     }
     
+    @objc func didPullToRefresh(_ refreshControl: UIRefreshControl) {
+        
+        superheroFetch()
+    }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return movies.count
@@ -40,15 +49,28 @@ class SuperheroViewController: UIViewController, UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PosterCell", for: indexPath) as! PosterCell
-        let movie = movies[indexPath.item]
-        if let posterPathString = movie["poster_path"] as? String {
+        cell.movie = movies[indexPath.item]
+        /*if let posterPathString = movie["poster_path"] as? String {
             let baseURLString = "https://image.tmdb.org/t/p/w500"
             let posterURL = URL(string: baseURLString + posterPathString)!
             cell.posterImageView.af_setImage(withURL: posterURL)
-        }
+        }*/
         return cell
     }
     
+    func superheroFetch(){
+        MovieApiManager().superHeroMovies { (movies: [Movie]?, error: Error?) in
+            if let movies = movies {
+                self.movies = movies
+                self.collectionView.reloadData()
+                self.refreshControl.endRefreshing()
+            } else if let error = error {
+                print(error.localizedDescription)
+            }
+        }
+    }
+    
+    /*
     func fetchMovies(){
         //activityIndicator.startAnimating()
         let url = URL(string: "https://api.themoviedb.org/3/movie/363088/similar?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")!
@@ -70,8 +92,17 @@ class SuperheroViewController: UIViewController, UICollectionViewDataSource {
         }
         task.resume()
         
-    }
+    }*/
     
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let cell = sender as! UICollectionViewCell
+        if let indexPath = collectionView.indexPath(for: cell){
+            let movie = movies[indexPath.row]
+            let detailViewController = segue.destination as! DetailViewController
+            detailViewController.movie = movie
+            
+        }
+    }
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()

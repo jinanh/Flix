@@ -8,11 +8,6 @@
 
 import UIKit
 
-enum MovieKeys{
-    static let title = "title"
-    static let backDropPath = "backdrop_path"
-    static let posterPath = "poster_path"
-}
 
 class DetailViewController: UIViewController {
     @IBOutlet weak var backDropImageView: UIImageView!
@@ -21,28 +16,27 @@ class DetailViewController: UIViewController {
     @IBOutlet weak var releaseDateLabel: UILabel!
     @IBOutlet weak var overviewLabel: UILabel!
     
-    var movie:[String: Any]?
+    var movie: Movie?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         if let movie = movie {
-            titleLabel.text = movie[MovieKeys.title] as? String
-            releaseDateLabel.text = movie["release_date"] as? String
-            overviewLabel.text = movie["overview"] as? String
-            let backDropPathString = movie[MovieKeys.backDropPath] as! String
-            let posterPathString = movie[MovieKeys.posterPath] as! String
+            titleLabel.text = movie.title
+            releaseDateLabel.text = movie.releaseDate
+            overviewLabel.text = movie.overview
+            
+            let backdropPathString = "\(String(describing: movie.backdropUrl))"
+            let posterPathString = "\(String(describing: movie.posterUrl))"
             let baseURLString = "https://image.tmdb.org/t/p/w500"
             
-            let backdropURL = URL(string: baseURLString + backDropPathString)!
+            let backdropURL = URL(string: baseURLString + backdropPathString)!
             backDropImageView.af_setImage(withURL: backdropURL)
             
-            let posterpatURL = URL(string: baseURLString + posterPathString)!
-            PosterImageView.af_setImage(withURL: posterpatURL)
-            
-        
+            let posterPathURL = URL(string: baseURLString + posterPathString)!
+            PosterImageView.af_setImage(withURL: posterPathURL)
         }
-        // Do any additional setup after loading the view.
+        
     }
 
     override func didReceiveMemoryWarning() {

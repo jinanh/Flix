@@ -15,7 +15,7 @@ class NowPlayingViewController: UIViewController, UITableViewDataSource {
     
     @IBOutlet weak var tableView: UITableView!
     
-    var movies:[[String:Any]] = []
+    var movies:[Movie] = []
     var refreshControl: UIRefreshControl!
     
     override func viewDidLoad() {
@@ -25,16 +25,16 @@ class NowPlayingViewController: UIViewController, UITableViewDataSource {
         refreshControl.addTarget(self, action: #selector(NowPlayingViewController.didPullToRefresh(_:)), for: . valueChanged)
         tableView.insertSubview(refreshControl, at: 0)
            tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.estimatedRowHeight = 120
+        tableView.estimatedRowHeight = 50
         tableView.dataSource = self
-        tableView.rowHeight = 200
-        fetchMovies()
+
+        nowplayingFetch()
     }
     
     @objc func didPullToRefresh(_ refreshControl: UIRefreshControl){
-        fetchMovies()
+        nowplayingFetch()
     }
-    
+    /*
     func fetchMovies(){
         activityIndicator.startAnimating()
         let url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")!
@@ -56,6 +56,62 @@ class NowPlayingViewController: UIViewController, UITableViewDataSource {
         }
         task.resume()
         
+    }*/
+    
+    func displayAlert(){
+        let alertController = UIAlertController(title: "Can't Find Any Movies", message: "Check Internet Connection", preferredStyle: .alert)
+        // create a cancel action
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
+            // handle cancel response here. Doing nothing will dismiss the view.
+        }
+        // add the cancel action to the alertController
+        alertController.addAction(cancelAction)
+        
+        // create an OK action
+        let OKAction = UIAlertAction(title: "OK", style: .default) { (action) in
+            // handle response here.
+        }
+        // add the OK action to the alert controller
+        alertController.addAction(OKAction)
+        
+        DispatchQueue.main.async {
+            self.present(alertController, animated: true, completion: nil)
+        }
+        
+    }
+    
+    func nowplayingFetch(){
+        activityIndicator.startAnimating()
+        MovieApiManager().nowPlayingMovies { (movies: [Movie]?, error: Error?) in
+            if let movies = movies {
+                self.movies = movies
+                self.tableView.reloadData()
+                self.refreshControl.endRefreshing()
+                self.activityIndicator.stopAnimating()
+            } else if let error = error {
+                self.displayAlert()
+                print(error.localizedDescription)
+            }
+        }
+    }
+    
+    @IBAction func popularMovies(_ sender: Any) {
+        activityIndicator.startAnimating()
+        MovieApiManager().popularMovies { (movies: [Movie]?, error: Error?) in
+            if let movies = movies {
+                self.movies = movies
+                self.tableView.reloadData()
+                self.refreshControl.endRefreshing()
+                self.activityIndicator.stopAnimating()
+            } else if let error = error {
+                self.displayAlert()
+                print(error.localizedDescription)
+            }
+        }
+    }
+   
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -65,7 +121,7 @@ class NowPlayingViewController: UIViewController, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
         
-        let movie = movies[indexPath.row]
+      /*  let movie = movies[indexPath.row]
         let title = movie["title"] as! String
         let overview = movie["overview"] as! String
         cell.titleLabel.text = title
@@ -75,7 +131,7 @@ class NowPlayingViewController: UIViewController, UITableViewDataSource {
         let baseURLString = "https://image.tmdb.org/t/p/w500"
         
         let posterURL = URL(string: baseURLString + posterPathString)!
-        cell.posterImageView.af_setImage(withURL: posterURL)
+        cell.posterImageView.af_setImage(withURL: posterURL)*/
         return cell
     }
     
